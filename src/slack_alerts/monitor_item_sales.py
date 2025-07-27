@@ -2,6 +2,8 @@ from slack_sdk import WebClient
 import os
 import clickhouse_connect
 from datetime import datetime
+
+
 def monitor_item_sales():
     current_date = str(datetime.now().strftime('%Y-%m-%d'))
     clickhouse_client = clickhouse_connect.get_client(

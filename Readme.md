@@ -1,39 +1,59 @@
 # Avrioc Case Study: Real-Time Clickstream Analytics Pipeline
 
-A comprehensive real-time data analytics pipeline that processes clickstream data using Kafka for streaming and ClickHouse for storage and analytics.
+A comprehensive real-time data analytics pipeline that processes clickstream data using Kafka for streaming and ClickHouse for analytics with specialized fact tables and automated monitoring.
 
 ## 🏗️ Architecture Overview
 
 This project implements a complete real-time analytics pipeline with the following components:
 
 ```
-Data Generator → Kafka Producer → Kafka Topic → Kafka Consumer → ClickHouse (with built-in dashboard)
+Data Generator → Kafka Producer → Kafka Topic → Specialized Consumers → ClickHouse Fact Tables → Slack Alerts
 ```
 
 ### Key Components
 
-- **Data Generator**: Simulates realistic clickstream data (user interactions, clicks, views, purchases)
-- **Kafka Streaming**: Handles real-time data ingestion and processing
-- **ClickHouse Database**: High-performance analytics database for data storage with built-in dashboard capabilities
-- **Comprehensive Testing**: Test suites for all major components
+- **Data Generator**: Simulates realistic clickstream data with A/B testing experiments, user sessions, and device tracking
+- **Kafka Streaming**: Handles real-time data ingestion and processing with multiple consumer groups
+- **ClickHouse Data Warehouse**: High-performance analytics database with specialized fact tables:
+  - `fct_user`: User-level interaction analytics
+  - `fct_item`: Item-level performance metrics  
+  - `fct_experiment`: A/B testing and experiment analytics
+- **Slack Monitoring**: Automated alerts for anomalous item sales patterns
+- **Connection Testing**: Simple test scripts to verify database connectivity
 
 ## 📋 Features
 
-- ✅ Real-time clickstream data generation
-- ✅ High-throughput Kafka streaming pipeline
-- ✅ Scalable ClickHouse data warehouse with built-in analytics
-- ✅ ClickHouse native dashboard and visualization
-- ✅ Configurable batch processing
-- ✅ Docker containerization
-- ✅ Comprehensive testing suite
+- ✅ Real-time clickstream data generation with rich metadata
+- ✅ High-throughput Kafka streaming pipeline with multiple consumer groups
+- ✅ Specialized ClickHouse fact tables for different analytics use cases
+- ✅ A/B testing and experiment tracking capabilities
+- ✅ User behavior and item performance analytics
+- ✅ Automated Slack alerts for sales anomalies
+- ✅ Configurable batch processing and data aggregation
+- ✅ Docker containerization for Kafka infrastructure
 
 ## 🛠️ Tech Stack
 
 - **Streaming**: Apache Kafka (Confluent Platform)
-- **Database & Analytics**: ClickHouse (with built-in dashboard)
+- **Database & Analytics**: ClickHouse with specialized fact tables
+- **Monitoring & Alerts**: Slack SDK for automated notifications
 - **Language**: Python 3.x
 - **Containerization**: Docker Compose
-- **Data Processing**: Pandas, PyArrow
+- **Data Processing**: Pandas, PyArrow, NumPy
+
+## 🗄️ Database Comparison
+
+The following table compares different database options for real-time analytics:
+
+| Database | Type | Speed | Pricing (for ~13M records/day) | Complexity | Popularity (GitHub stats) |
+|----------|------|-------|-------------------------------|------------|---------------------------|
+| Druid | Columnar | Sub-second analytics and ingestion | Self-hosted: ~$200/mo infrastructure<br/>Managed: ~$400-800/mo | Moderate-to-high; requires expertise | 13,000+ stars, 67 contributors, ~800 issues |
+| Pinot | Columnar | Sub-second response, high concurrency | Self-hosted: ~$150/mo infrastructure<br/>Managed: ~$300-600/mo | Moderate; requires indexing understanding | 5,500+ stars, 100+ contributors, ~600 issues |
+| **ClickHouse** | **Columnar** | **Very fast; billions of rows/sec** | **Self-hosted: ~$50-100/mo**<br/>**ClickHouse Cloud: ~$100-250/mo** | **Medium; complex at large scale** | **42,000+ stars, 850+ contributors, ~1,200 issues** |
+| Cassandra | Wide Column Store | High write throughput, low latency | Self-hosted: ~$100-200/mo<br/>Managed (DataStax): ~$300-500/mo | High; complex modeling and ops | 8,200+ stars, 350+ contributors, ~350 issues |
+| MongoDB | Document DB | Fast for simple queries; slower for analytics | Atlas: ~$200-400/mo<br/>Self-hosted: ~$80-150/mo | Low for basics, moderate for analytics | 24,000+ stars, 600+ contributors, ~1,500 issues |
+
+**ClickHouse was selected for this project** due to its exceptional performance for analytical workloads, strong community support, and optimal balance of complexity versus capability for real-time analytics use cases.
 
 ## 📦 Installation & Setup
 
@@ -41,6 +61,8 @@ Data Generator → Kafka Producer → Kafka Topic → Kafka Consumer → ClickHo
 
 - Docker and Docker Compose
 - Python 3.8+
+- ClickHouse server (local or cloud)
+- Slack workspace with bot token (for alerts)
 - Git
 
 ### Quick Start
@@ -65,10 +87,14 @@ Data Generator → Kafka Producer → Kafka Topic → Kafka Consumer → ClickHo
    ```bash
    export KAFKA_BROKER_URL="localhost:9092"
    export KAFKA_TOPIC="clickstream_topic"
+   export KAFKA_CONSUMER_TIMEOUT_MS="10000"
+   export KAFKA_FLUSH_INTERVAL="30"
+   export KAFKA_BATCH_SIZE="1000"
    export CLICKHOUSE_HOST="localhost"
    export CLICKHOUSE_USER="default"
    export CLICKHOUSE_PASSWORD=""
    export KAFKA_SECURITY_PROTOCOL="PLAINTEXT"
+   export SLACK_BOT_TOKEN="your-slack-bot-token"
    ```
 
 ## 🚀 Usage
@@ -80,14 +106,24 @@ Data Generator → Kafka Producer → Kafka Topic → Kafka Consumer → ClickHo
    python src/kafka/producer.py --batch_size 1000 --time_interval 1 --data_generation_speed 10000
    ```
 
-2. **Start the Kafka Consumer** (consumes and stores data in ClickHouse)
+2. **Start the Specialized Consumers** (in separate terminals)
    ```bash
+   # Raw clickstream data consumer
    python src/kafka/consumer.py
+   
+   # User analytics consumer
+   python src/data_models/fct_user.py
+   
+   # Item analytics consumer (includes sales monitoring)
+   python src/data_models/fct_item.py
+   
+   # Experiment analytics consumer
+   python src/data_models/fct_experiment.py
    ```
 
-3. **Access Analytics Dashboard**
+3. **Monitor Sales Alerts**
    
-   Once data is flowing into ClickHouse, you can access the built-in ClickHouse dashboard and analytics tools through the ClickHouse interface to visualize and analyze your clickstream data.
+   The `fct_item.py` consumer automatically triggers Slack alerts when item sales exceed statistical thresholds.
 
 ### Configuration Options
 
@@ -98,35 +134,45 @@ Data Generator → Kafka Producer → Kafka Topic → Kafka Consumer → ClickHo
 
 #### Data Schema
 The generated clickstream data includes:
-- `user_id`: Unique user identifier (user_0000 to user_9998)
-- `item_id`: Product/item identifier (item_0000 to item_0049) 
-- `interaction_type`: Type of interaction (click, view, purchase)
-- `timestamp`: Event timestamp
+- **Core Data**: `user_id`, `item_id`, `interaction_type`, `timestamp`
+- **Experiment Metadata**: `experiment_name`, `experiment_variation`
+- **Session Data**: `session_id`, `device_name`
 
-## 📊 Analytics & Dashboard Features
+#### Fact Tables Structure
+- **fct_user**: User-level aggregations (total interactions, purchases, views, clicks)
+- **fct_item**: Item-level performance metrics with anomaly detection
+- **fct_experiment**: A/B testing results and experiment performance
 
-ClickHouse provides built-in analytics and dashboard capabilities including:
+## 📊 Analytics & Monitoring Features
 
-- **Native SQL Analytics**: Query clickstream data directly using ClickHouse's powerful SQL engine
-- **Built-in Visualization**: Create charts and graphs using ClickHouse's visualization tools
-- **Real-time Metrics**: Monitor key performance indicators as data flows in
-- **Custom Dashboards**: Build personalized dashboards using ClickHouse's dashboard features
-- **High-Performance Queries**: Leverage ClickHouse's columnar storage for fast analytics
+### ClickHouse Analytics
+- **Specialized Fact Tables**: Pre-aggregated data for efficient querying
+- **Real-time Metrics**: Live dashboards for user behavior and item performance
+- **A/B Testing Analytics**: Experiment performance tracking and statistical analysis
+- **High-Performance Queries**: Optimized for time-series analytics
 
-## 🧪 Testing
+### Slack Monitoring
+- **Automated Alerts**: Sales anomaly detection using statistical thresholds
+- **Real-time Notifications**: Immediate alerts when items exceed 1.5x average sales
+- **Customizable Thresholds**: Configurable monitoring parameters
 
-Run the comprehensive test suite:
+## 🧪 Testing & Verification
+
+### Connection Tests
+Run simple connection verification tests:
 
 ```bash
-# Test Kafka components
-python test/kafka_producer.py
-python test/kafka_consumer.py
-
 # Test database connections
 python test/test_clickhouse.py
 python test/test_druid.py
 python test/test_mongo_db.py
+
+# Test Kafka components
+python test/kafka_producer.py
+python test/kafka_consumer.py
 ```
+
+*Note: Test scripts verify basic connectivity and are not comprehensive test suites.*
 
 ## 📁 Project Structure
 
@@ -135,16 +181,22 @@ avrioc_case_study/
 ├── docker-compose.yml          # Kafka container setup
 ├── requirements.txt            # Python dependencies
 ├── src/
-│   └── kafka/
-│       ├── data_generator.py   # Clickstream data generation
-│       ├── producer.py         # Kafka producer implementation
-│       └── consumer.py         # Kafka consumer with ClickHouse integration
+│   ├── data_models/           # Specialized analytics consumers
+│   │   ├── fct_experiment.py  # A/B testing analytics
+│   │   ├── fct_item.py        # Item performance analytics
+│   │   └── fct_user.py        # User behavior analytics
+│   ├── kafka/
+│   │   ├── data_generator.py  # Rich clickstream data generation
+│   │   ├── producer.py        # Kafka producer with auto-topic creation
+│   │   └── consumer.py        # Base consumer with ClickHouse integration
+│   └── slack_alerts/
+│       └── monitor_item_sales.py # Sales anomaly detection & alerts
 └── test/
-    ├── kafka_producer.py       # Producer tests
-    ├── kafka_consumer.py       # Consumer tests
-    ├── test_clickhouse.py      # ClickHouse tests
-    ├── test_druid.py          # Druid tests
-    └── test_mongo_db.py       # MongoDB tests
+    ├── test_clickhouse.py     # ClickHouse connection test
+    ├── test_druid.py          # Druid connection test
+    ├── test_mongo_db.py       # MongoDB connection test
+    ├── kafka_producer.py      # Kafka producer connection test
+    └── kafka_consumer.py      # Kafka consumer connection test
 ```
 
 ## 🔧 Environment Variables
@@ -153,10 +205,14 @@ avrioc_case_study/
 |----------|-------------|---------|
 | `KAFKA_BROKER_URL` | Kafka broker connection string | `localhost:9092` |
 | `KAFKA_TOPIC` | Kafka topic name | `clickstream_topic` |
+| `KAFKA_CONSUMER_TIMEOUT_MS` | Consumer poll timeout | `10000` |
+| `KAFKA_FLUSH_INTERVAL` | Data flush interval (seconds) | `30` |
+| `KAFKA_BATCH_SIZE` | Consumer batch size | `1000` |
 | `CLICKHOUSE_HOST` | ClickHouse server host | `localhost` |
 | `CLICKHOUSE_USER` | ClickHouse username | `default` |
 | `CLICKHOUSE_PASSWORD` | ClickHouse password | `` |
 | `KAFKA_SECURITY_PROTOCOL` | Kafka security protocol | `PLAINTEXT` |
+| `SLACK_BOT_TOKEN` | Slack bot token for alerts | Required for monitoring |
 
 ## 🐛 Troubleshooting
 
@@ -169,16 +225,23 @@ avrioc_case_study/
 2. **ClickHouse Connection Error**
    - Verify ClickHouse server is running and accessible
    - Check connection parameters and credentials
+   - Ensure secure connection settings match your ClickHouse setup
 
-3. **No Data in ClickHouse**
+3. **No Data in Fact Tables**
    - Ensure Kafka producer is running and generating data
-   - Check that Kafka consumer is successfully processing messages
-   - Verify ClickHouse table creation and data insertion
+   - Check that appropriate consumers are running for each fact table
+   - Verify consumer group names don't conflict
+
+4. **Slack Alerts Not Working**
+   - Verify `SLACK_BOT_TOKEN` environment variable is set
+   - Ensure bot has permissions to post in the target channel
+   - Check that item sales data exists in `fct_item` table
 
 ### Logs and Monitoring
 
 - View Kafka logs: `docker-compose logs kafka`
 - Monitor topic: `docker exec -it <kafka-container> kafka-topics --list --bootstrap-server localhost:9092`
+- Check ClickHouse tables: Query `SHOW TABLES` in ClickHouse client
 
 ## 🤝 Contributing
 
@@ -197,7 +260,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Apache Kafka Documentation](https://kafka.apache.org/documentation/)
 - [ClickHouse Documentation](https://clickhouse.com/docs)
 - [ClickHouse SQL Reference](https://clickhouse.com/docs/en/sql-reference)
-- [ClickHouse Dashboard Guide](https://clickhouse.com/docs/en/operations/monitoring)
+- [Slack SDK Documentation](https://slack.dev/python-slack-sdk/)
 
 ---
 
