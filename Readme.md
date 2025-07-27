@@ -21,8 +21,8 @@ Data Generator → Kafka Producer → Kafka Topic → Kafka Consumer → ClickHo
 
 - ✅ Real-time clickstream data generation
 - ✅ High-throughput Kafka streaming pipeline
-- ✅ Scalable ClickHouse data warehouse
-- ✅ Interactive analytics dashboard
+- ✅ Scalable ClickHouse data warehouse with built-in analytics
+- ✅ ClickHouse native dashboard and visualization
 - ✅ Configurable batch processing
 - ✅ Docker containerization
 - ✅ Comprehensive testing suite
@@ -30,8 +30,7 @@ Data Generator → Kafka Producer → Kafka Topic → Kafka Consumer → ClickHo
 ## 🛠️ Tech Stack
 
 - **Streaming**: Apache Kafka (Confluent Platform)
-- **Database**: ClickHouse
-- **Visualization**: Streamlit + Plotly
+- **Database & Analytics**: ClickHouse (with built-in dashboard)
 - **Language**: Python 3.x
 - **Containerization**: Docker Compose
 - **Data Processing**: Pandas, PyArrow
@@ -86,10 +85,9 @@ Data Generator → Kafka Producer → Kafka Topic → Kafka Consumer → ClickHo
    python src/kafka/consumer.py
    ```
 
-3. **Launch the Analytics Dashboard**
-   ```bash
-   streamlit run src/clickhouse/clickhouse_dashboard.py
-   ```
+3. **Access Analytics Dashboard**
+   
+   Once data is flowing into ClickHouse, you can access the built-in ClickHouse dashboard and analytics tools through the ClickHouse interface to visualize and analyze your clickstream data.
 
 ### Configuration Options
 
@@ -105,15 +103,15 @@ The generated clickstream data includes:
 - `interaction_type`: Type of interaction (click, view, purchase)
 - `timestamp`: Event timestamp
 
-## 📊 Dashboard Features
+## 📊 Analytics & Dashboard Features
 
-The Streamlit dashboard provides real-time analytics including:
+ClickHouse provides built-in analytics and dashboard capabilities including:
 
-- **Key Metrics**: Total interactions, unique users, unique items
-- **Interaction Breakdown**: Distribution of clicks, views, and purchases
-- **Time Series Analysis**: Trends over time
-- **User Behavior Analytics**: Top users and items
-- **Real-time Updates**: Auto-refreshing data every 30 seconds
+- **Native SQL Analytics**: Query clickstream data directly using ClickHouse's powerful SQL engine
+- **Built-in Visualization**: Create charts and graphs using ClickHouse's visualization tools
+- **Real-time Metrics**: Monitor key performance indicators as data flows in
+- **Custom Dashboards**: Build personalized dashboards using ClickHouse's dashboard features
+- **High-Performance Queries**: Leverage ClickHouse's columnar storage for fast analytics
 
 ## 🧪 Testing
 
@@ -137,12 +135,10 @@ avrioc_case_study/
 ├── docker-compose.yml          # Kafka container setup
 ├── requirements.txt            # Python dependencies
 ├── src/
-│   ├── kafka/
-│   │   ├── data_generator.py   # Clickstream data generation
-│   │   ├── producer.py         # Kafka producer implementation
-│   │   └── consumer.py         # Kafka consumer with ClickHouse integration
-│   └── clickhouse/
-│       └── clickhouse_dashboard.py  # Streamlit analytics dashboard
+│   └── kafka/
+│       ├── data_generator.py   # Clickstream data generation
+│       ├── producer.py         # Kafka producer implementation
+│       └── consumer.py         # Kafka consumer with ClickHouse integration
 └── test/
     ├── kafka_producer.py       # Producer tests
     ├── kafka_consumer.py       # Consumer tests
@@ -174,9 +170,10 @@ avrioc_case_study/
    - Verify ClickHouse server is running and accessible
    - Check connection parameters and credentials
 
-3. **Dashboard Not Loading**
-   - Ensure Streamlit is installed: `pip install streamlit`
-   - Check that ClickHouse contains data
+3. **No Data in ClickHouse**
+   - Ensure Kafka producer is running and generating data
+   - Check that Kafka consumer is successfully processing messages
+   - Verify ClickHouse table creation and data insertion
 
 ### Logs and Monitoring
 
@@ -199,7 +196,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - [Apache Kafka Documentation](https://kafka.apache.org/documentation/)
 - [ClickHouse Documentation](https://clickhouse.com/docs)
-- [Streamlit Documentation](https://docs.streamlit.io/)
+- [ClickHouse SQL Reference](https://clickhouse.com/docs/en/sql-reference)
+- [ClickHouse Dashboard Guide](https://clickhouse.com/docs/en/operations/monitoring)
 
 ---
 
