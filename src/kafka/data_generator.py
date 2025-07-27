@@ -12,6 +12,11 @@ user_ids = [f"user_{str(i).zfill(4)}" for i in range(9999)]
 item_ids = [f"item_{str(i).zfill(4)}" for i in range(50)]
 interaction_types = ['click','view','purchase']
 timestamps = [datetime.now() - timedelta(days=random.randint(0, 1)) for _ in range(1000)]
+experiments = ['Optimized-conversion','Optimized-revenue','Optimized-revenue-per-click','Optimized-revenue-per-view','Optimized-revenue-per-purchase']
+experiment_variations = ['A','B','C','D','E']
+session_ids = [f"session_{str(i).zfill(4)}" for i in range(9999)]
+device_names = ['iPhone','Android','Desktop','Tablet']
+
 
 
 def generate_data(batch_size,time_interval,data_generation_speed):
@@ -26,7 +31,15 @@ def generate_data(batch_size,time_interval,data_generation_speed):
             'user_id': user_id,
             'item_id': item_id,
             'interaction_type': interaction_type,
-            'timestamp': timestamp})
+            'timestamp': timestamp,
+            'metadata': {
+                'experiment_name': random.choice(experiments),
+                'experiment_variation': random.choice(experiment_variations),
+                'session_id': random.choice(session_ids),
+                'device_name': random.choice(device_names)
+                
+            }
+        })
     return data
 
 if __name__ == '__main__':
