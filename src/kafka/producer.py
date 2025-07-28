@@ -24,16 +24,20 @@ def check_topic_exists(topic_name):
     return topic_name in admin_client.list_topics()
 
 if __name__ == '__main__':
-    while True:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--batch_size', type=int, default=1000)
+    parser.add_argument('--time_interval', type=int, default=1)
+    parser.add_argument('--data_generation_speed', type=int, default=10000)
+    parser.add_argument('--iters', type=int, default=20)
+    args = parser.parse_args()
+    iters = 0
+
+    while iters<args.iters:
         start_time = time.time()
         kafka_broker_url = os.getenv('KAFKA_BROKER_URL')
         topic_name = os.getenv('KAFKA_TOPIC')
 
-        parser = argparse.ArgumentParser()
-        parser.add_argument('--batch_size', type=int, default=1000)
-        parser.add_argument('--time_interval', type=int, default=1)
-        parser.add_argument('--data_generation_speed', type=int, default=10000)
-        args = parser.parse_args()
+
 
         if not check_topic_exists(topic_name):
             admin_client = KafkaAdminClient(
@@ -51,7 +55,7 @@ if __name__ == '__main__':
 
         for row in data:
             producer.send(topic_name, key=row['user_id'].encode('utf-8'), value=json.dumps(row).encode('utf-8'))
-
+        iters+=1
         producer.flush()
         producer.close()
         end_time = time.time()
